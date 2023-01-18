@@ -93,7 +93,7 @@ const RegisterPage = () => {
   const submitDataTest = () => {
     axios({
       method: 'post',
-      url: 'http://127.0.0.1:3000/users',
+      url: 'http://127.0.0.1:8080/users',
       data: values
       // headers: { token },
     })

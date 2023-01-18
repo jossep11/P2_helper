@@ -11,6 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/jossep11/config"
 	"github.com/jossep11/entities"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Data
@@ -203,36 +204,75 @@ func GetUser(c *fiber.Ctx) error {
 }
 
 func AddUser(c *fiber.Ctx) error {
-	user := new(entities.Users)
-	if err1 := c.BodyParser(user); err1 != nil {
-		return c.Status(503).JSON("gohome" + err1.Error())
+	// user := new(entities.Users)
+
+	var user entities.Users
+	var userName = c.FormValue("UserName")
+	var email = c.FormValue("Email")
+
+	config.Database.Select("user_name").Where("user_name = ?", userName).First(&user)
+	config.Database.Select("email").Where("email = ?", email).First(&user)
+
+	if user.UserName != "" && user.Email != "" {
+		return c.Status(400).JSON("Username y email ya existen")
+	} else if user.UserName != "" {
+		fmt.Println("Username already exists")
+		return c.Status(400).JSON("Username ya existe")
+	} else if user.Email != "" {
+		return c.Status(400).JSON("Email ya existe")
+	} else {
+		fmt.Println("Username available")
+		user := new(entities.Users)
+		if err := c.BodyParser(user); err != nil {
+			return c.Status(503).JSON(err.Error())
+		}
+		hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return c.Status(500).JSON("Error hashing password")
+		}
+		// compare := bcrypt.CompareHashAndPassword(hash, []byte("12345"))
+		// if compare == nil {
+		// 	log.Println("success")
+		// }
+
+		user.Password = string(hash)
+		if err := config.Database.Create(&user); err.Error != nil {
+			return c.Status(400).JSON(err.Error)
+		}
+
+		return c.Status(201).JSON(user)
+
 	}
 
-	// hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	// if err != nil {
-	// 	return c.Status(500).JSON("Error hashing password")
-	// }
-	// compare := bcrypt.CompareHashAndPassword(hash, []byte(user.Password))
-	// if compare == nil {
-	// 	log.Println("success")
-	// }
-
-	// user.Password = string(hash)
-	config.Database.Create(&user)
-
-	return c.Status(201).JSON(user)
 }
 
 func UpdateUser(c *fiber.Ctx) error {
-	user := new(entities.Users)
 	id := c.Params("id")
 
-	if err := c.BodyParser(user); err != nil {
-		return c.Status(503).SendString(err.Error())
-	}
+	var user entities.Users
+	var userName = c.FormValue("UserName")
+	var email = c.FormValue("Email")
 
-	config.Database.Where("id = ?", id).Updates(&user)
-	return c.Status(200).JSON(user)
+	config.Database.Select("user_name").Where("user_name = ?", userName).First(&user)
+	config.Database.Select("email").Where("email = ?", email).First(&user)
+
+	if user.UserName != "" && user.Email != "" {
+		return c.Status(400).JSON("Username y email ya existen")
+	} else if user.UserName != "" {
+		fmt.Println("Username already exists")
+		return c.Status(400).JSON("Username ya existe")
+	} else if user.Email != "" {
+		return c.Status(400).JSON("Email ya existe")
+	} else {
+		user := new(entities.Users)
+
+		if err := c.BodyParser(user); err != nil {
+			return c.Status(503).SendString(err.Error())
+		}
+
+		config.Database.Where("id = ?", id).Updates(&user)
+		return c.Status(200).JSON(user)
+	}
 }
 
 func RemoveUser(c *fiber.Ctx) error {

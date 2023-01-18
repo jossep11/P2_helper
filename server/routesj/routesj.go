@@ -33,9 +33,9 @@ func Rutas() {
 	users.Get("/:id", handlers.GetUser)
 	users.Post("/", handlers.AddUser)
 	users.Put("/:id", handlers.UpdateUser)
-	users.Delete("/:id", handlers.RemoveData, handlers.GetUsers)
+	users.Delete("/:id", handlers.RemoveUser, handlers.GetUsers)
 
-	log.Fatal(app.Listen(":3000"))
+	log.Fatal(app.Listen(":8080"))
 
 }
 
