@@ -7,6 +7,9 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
+
+	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jossep11/config"
@@ -286,4 +289,48 @@ func RemoveUser(c *fiber.Ctx) error {
 	}
 
 	return c.Next()
+}
+
+func Login(c *fiber.Ctx) error {
+	req := new(entities.Users)
+	if err := c.BodyParser(req); err != nil {
+		return err
+	}
+
+	if req.Email == "" || req.Password == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid login credentials")
+	}
+
+	var users []entities.Users
+
+	config.Database.Where("email = ?", req.Email).Find(&users)
+
+	if len(users) == 0 {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid login credentials")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(users[0].Password), []byte(req.Password)); err != nil {
+		return err
+	}
+
+	token, exp, err := createJWTToken(users)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(fiber.Map{"token": token, "exp": exp, "user": users})
+}
+
+func createJWTToken(users []entities.Users) (string, int64, error) {
+	exp := time.Now().Add(time.Minute * 30).Unix()
+	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+	claims["userName"] = users[0].UserName
+	claims["exp"] = exp
+	t, err := token.SignedString([]byte("secret"))
+	if err != nil {
+		return "", 0, err
+	}
+
+	return t, exp, nil
 }

@@ -3,10 +3,9 @@ package routesj
 import (
 	"log"
 
-	// "time"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	jwtware "github.com/gofiber/jwt/v3"
 
 	// "github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/jossep11/handlers"
@@ -21,6 +20,9 @@ func Rutas() {
 	app.Use(cors.New())
 
 	data := app.Group("/data")
+	data.Use(jwtware.New(jwtware.Config{
+		SigningKey: []byte("secret"),
+	}))
 	data.Get("/", handlers.GetDatas)
 	data.Get("/:id", handlers.GetData)
 	data.Post("/", handlers.AddData)
@@ -29,11 +31,18 @@ func Rutas() {
 
 	// Users
 	users := app.Group("/users")
+	users.Use(jwtware.New(jwtware.Config{
+		SigningKey: []byte("secret"),
+	}))
+
 	users.Get("/", handlers.GetUsers)
 	users.Get("/:id", handlers.GetUser)
 	users.Post("/", handlers.AddUser)
 	users.Put("/:id", handlers.UpdateUser)
 	users.Delete("/:id", handlers.RemoveUser, handlers.GetUsers)
+
+	// Login
+	app.Post("/login", handlers.Login)
 
 	log.Fatal(app.Listen(":8080"))
 

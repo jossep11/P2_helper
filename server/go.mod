@@ -4,6 +4,9 @@ go 1.19
 
 require (
 	github.com/gofiber/fiber/v2 v2.41.0
+	github.com/gofiber/jwt/v3 v3.3.5
+	github.com/golang-jwt/jwt/v4 v4.4.3
+	golang.org/x/crypto v0.5.0
 	gorm.io/driver/mysql v1.4.5
 	gorm.io/gorm v1.24.3
 )
@@ -21,6 +24,5 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.44.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
-	golang.org/x/crypto v0.5.0 // indirect
 	golang.org/x/sys v0.4.0 // indirect
 )
